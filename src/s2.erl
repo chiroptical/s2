@@ -6,6 +6,7 @@
     filter/2,
     fold/3,
     from_list/1,
+    singleton/1,
     intersections/1,
     intersection/2,
     is_empty/1,
@@ -56,6 +57,11 @@ fold(Function, Acc0, Set) ->
 -spec from_list(List) -> Set when List :: [Element], Set :: set(Element).
 from_list(List) ->
     sets:from_list(List, [{version, 2}]).
+
+-doc "Construct a `Set` with a single element.".
+-spec singleton(Elem) -> Set when Elem :: Element, Set :: set(Element).
+singleton(X) ->
+    s2:from_list([X]).
 
 -spec intersections(SetList) -> Set when SetList :: [set(Element), ...], Set :: set(Element).
 intersections(SetList) ->
