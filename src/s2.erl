@@ -26,7 +26,7 @@
 
 -define(VALUE, []).
 
--doc("As returned by `empty/0`.").
+-doc "As returned by `empty/0`.".
 -opaque set(Element) :: #{Element => ?VALUE}.
 
 -spec insert(Element, Set1) -> Set2 when Set1 :: set(Element), Set2 :: set(Element).
