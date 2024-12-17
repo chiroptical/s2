@@ -13,6 +13,6 @@ is_not_proper_subset_test() ->
 
 partition_test() ->
     Set = s2:from_list([1, 2, 3]),
-    {Keep, Discard} = s2:partition(fun (X) -> X >= 2 end, Set),
+    {Keep, Discard} = s2:partition(fun(X) -> X >= 2 end, Set),
     ?assertEqual(s2:from_list([1]), Discard),
     ?assertEqual(s2:from_list([2, 3]), Keep).
