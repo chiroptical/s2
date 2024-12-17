@@ -12,6 +12,7 @@
     is_disjoint/2,
     is_element/2,
     is_subset/2,
+    is_proper_subset/2,
     to_list/1,
     map/2,
     empty/0,
@@ -25,7 +26,7 @@
 
 -define(VALUE, []).
 
--doc("As returned by `empty/0`.").
+-doc "As returned by `empty/0`.".
 -opaque set(Element) :: #{Element => ?VALUE}.
 
 -spec insert(Element, Set1) -> Set2 when Set1 :: set(Element), Set2 :: set(Element).
@@ -79,6 +80,10 @@ is_empty(Set) ->
 -spec is_subset(Set1, Set2) -> boolean() when Set1 :: set(Element), Set2 :: set(Element).
 is_subset(Set1, Set2) ->
     sets:is_subset(Set1, Set2).
+
+-spec is_proper_subset(Set1, Set2) -> boolean() when Set1 :: set(Element), Set2 :: set(Element).
+is_proper_subset(Set1, Set2) ->
+    sets:is_subset(Set1, Set2) and (sets:size(Set1) =/= sets:size(Set2)).
 
 -spec map(Fun, Set1) -> Set2 when
     Fun :: fun((Element1) -> Element2), Set1 :: set(Element1), Set2 :: set(Element2).
