@@ -19,7 +19,8 @@
     size/1,
     difference/2,
     unions/1,
-    union/2
+    union/2,
+    partition/2
 ]).
 
 -export_type([set/1]).
@@ -115,3 +116,24 @@ union(Set1, Set2) ->
 -spec to_list(Set) -> List when Set :: set(Element), List :: [Element].
 to_list(Set) ->
     sets:to_list(Set).
+
+-doc """
+partition(Pred, Set) -> {Keep, Discard}
+
+Similar to `filter/2` but it returns a `Tuple` of two elements. The first
+contains elements where the predicate evaluates to `true`. The second contains
+elements where the predicate evaluates to `false`.
+""".
+-spec partition(Pred, Set1) -> {Set2, Set2} when
+    Pred :: fun((Element) -> boolean()), Set1 :: set(Element), Set2 :: set(Element).
+partition(Pred, Set1) ->
+    sets:fold(
+        fun(Elem, {Keep, Discard}) ->
+            case Pred(Elem) of
+                true -> {s2:insert(Elem, Keep), Discard};
+                false -> {Keep, s2:insert(Elem, Discard)}
+            end
+        end,
+        {s2:empty(), s2:empty()},
+        Set1
+    ).
