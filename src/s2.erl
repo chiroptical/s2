@@ -21,7 +21,8 @@
     difference/2,
     unions/1,
     union/2,
-    partition/2
+    partition/2,
+    cartesian_product/2
 ]).
 
 -export_type([set/1]).
@@ -141,5 +142,32 @@ partition(Pred, Set1) ->
             end
         end,
         {s2:empty(), s2:empty()},
+        Set1
+    ).
+
+-doc """
+Given two sets, pair every element in the first set with every element in the second.
+
+```erlang
+1> Product = s2:cartesian_product(s2:from_list([1, 2]), s2:from_list([3, 4])).
+#{{1,3} => [],{1,4} => [],{2,3} => [],{2,4} => []}
+2> Product =:= s2:from_list([{1, 3}, {1, 4}, {2, 3}, {2, 4}]).
+true
+```
+""".
+-spec cartesian_product(Set1, Set2) -> Set3 when
+    Set1 :: set(Element1), Set2 :: set(Element2), Set3 :: set({Element1, Element2}).
+cartesian_product(Set1, Set2) ->
+    s2:fold(
+        fun(X, Outer) ->
+            s2:fold(
+                fun(Y, Inner) ->
+                    s2:insert({X, Y}, Inner)
+                end,
+                Outer,
+                Set2
+            )
+        end,
+        s2:empty(),
         Set1
     ).
