@@ -1,9 +1,18 @@
 -module(s2).
 -moduledoc """
 Here lies s2, a wrapper around the Erlang's [`sets`](https://www.erlang.org/doc/apps/stdlib/sets.html)
-library which gives you `{version, 2}` without having to worry about it. The API surface is
-more similar to Haskell's [`Data.Set`](https://hackage.haskell.org/package/containers-0.7/docs/Data-Set.html)
-module because of my own personal preferences. 
+module which gives you the `{version, 2}` representation without having to worry about it. This library
+exists because I was using [elp](https://github.com/WhatsApp/erlang-language-platform) during
+Advent of Code and it kept complaining about using `{version, 2}` for `sets:new/1` and `sets:from_list/1`.
+The documentation says,
+
+> This new representation will become the default in future Erlang/OTP versions. 
+
+but it hasn't happened yet so either this library will be useful or it will push Erlang/OTP
+to make it the default. Either way, he API surface is more similar to Haskell's 
+[`Data.Set`](https://hackage.haskell.org/package/containers-0.7/docs/Data-Set.html) module
+because of my own personal preferences. For reference, the `{version, 2}` representation is just
+a map where all the values are `[]`.
 
 If you have any suggestions or find an issue please submit an issue on [github](https://github.com/chiroptical/s2)
 """.
@@ -54,13 +63,25 @@ Return the empty set.
 empty() ->
     sets:new([{version, 2}]).
 
--doc "Construct a `Set` with a single element.".
+-doc """
+Construct a set with a single element.
+
+```erlang
+1> s2:singleton(1).
+#{1 => []}
+```
+""".
 -spec singleton(Elem) -> Set when Elem :: Element, Set :: set(Element).
 singleton(X) ->
     s2:from_list([X]).
 
 -doc """
-Construct a `Set` from a list of elements.
+Construct a set from a list of elements.
+
+```erlang
+1> s2:from_list([1, 2, 3]).
+#{1 => [], 2 => [], 3 => []}
+```
 """.
 -spec from_list(List) -> Set when List :: [Element], Set :: set(Element).
 from_list(List) ->
@@ -132,58 +153,198 @@ the initial accumulator.
 fold(Function, Acc0, Set) ->
     sets:fold(Function, Acc0, Set).
 
+-doc """
+Given a list of sets, take the set intersection of all sets.
+
+```erlang
+1> s2:intersections([s2:singleton(1), s2:singleton(1)]).
+#{1 => []}
+2> s2:intersections([s2:singleton(1), s2:singleton(2)]).
+#{}
+```
+""".
 -spec intersections(SetList) -> Set when SetList :: [set(Element), ...], Set :: set(Element).
 intersections(SetList) ->
     sets:intersection(SetList).
 
+-doc """
+Given two sets, take the set intersection of them.
+
+```erlang
+1> s2:intersection(s2:singleton(1), s2:singleton(1)).
+#{1 => []}
+2> s2:intersection(s2:singleton(1), s2:singleton(2)).
+#{}
+```
+""".
 -spec intersection(Set1, Set2) -> Set3 when
     Set1 :: set(Element), Set2 :: set(Element), Set3 :: set(Element).
 intersection(Set1, Set2) ->
     sets:intersection(Set1, Set2).
 
+-doc """
+Given two sets, determine if their intersection is the empty set.
+Returns `true` if the intersection is the empty set and `false` otherwise.
+
+```erlang
+1> s2:is_disjoint(s2:singleton(1), s2:singleton(2)).
+true
+2> s2:is_disjoint(s2:from_list([1, 2]), s2:singleton(2)).
+false
+```
+""".
 -spec is_disjoint(Set1, Set2) -> boolean() when Set1 :: set(Element), Set2 :: set(Element).
 is_disjoint(Set1, Set2) ->
     sets:is_disjoint(Set1, Set2).
 
+-doc """
+Given an element and a set, if the element is contained in the set return
+`true` otherwise return `false`.
+
+```erlang
+1> s2:is_element(1, s2:singleton(1)).
+true
+2> s2:is_element(1, s2:singleton(2)).
+false
+```
+""".
 -spec is_element(Element, Set) -> boolean() when Set :: set(Element).
 is_element(Element, Set) ->
     sets:is_element(Element, Set).
 
+-doc """
+Given a set, if it is the empty set return `true` else return `false`.
+
+```erlang
+1> s2:is_empty(s2:empty()).
+true
+2> s2:is_empty(s2:singleton(1)).
+false
+```
+""".
 -spec is_empty(Set) -> boolean() when Set :: set(_).
 is_empty(Set) ->
     sets:is_empty(Set).
 
+-doc """
+Given two sets, if every element of the first is contained in the second
+return `true` otherwise return `false`.
+
+```erlang
+1> s2:is_subset(s2:singleton(1), s2:singleton(1)).
+true
+2> s2:is_subset(s2:from_list([1, 2]), s2:from_list([1, 2])).
+true
+3> s2:is_subset(s2:from_list([1, 2]), s2:from_list([1, 2, 3])).
+true
+```
+""".
 -spec is_subset(Set1, Set2) -> boolean() when Set1 :: set(Element), Set2 :: set(Element).
 is_subset(Set1, Set2) ->
     sets:is_subset(Set1, Set2).
 
+-doc """
+Given two sets, if every element of the first is contained in the second
+**and** the sets are different return `true` otherwise return `false`.
+
+```erlang
+1> s2:is_proper_subset(s2:singleton(1), s2:singleton(1)).
+true
+2> s2:is_proper_subset(s2:from_list([1, 2]), s2:from_list([1, 2])).
+false
+3> s2:is_proper_subset(s2:from_list([1, 2]), s2:from_list([1, 2, 3])).
+true
+```
+""".
 -spec is_proper_subset(Set1, Set2) -> boolean() when Set1 :: set(Element), Set2 :: set(Element).
 is_proper_subset(Set1, Set2) ->
     sets:is_subset(Set1, Set2) and (sets:size(Set1) =/= sets:size(Set2)).
 
+-doc """
+Given a unary function and a set, apply the unary function to each element
+of the set to form a new set. The input and output set may not be the same
+size.
+
+```erlang
+1> s2:map(fun (X) -> X + 1 end, s2:from_list([1, 2, 3])).
+#{2 => [],3 => [],4 => []}
+2> s2:map(fun (_X) -> 1 end, s2:from_list([1, 2, 3])).
+#{1 => []}
+```
+""".
 -spec map(Fun, Set1) -> Set2 when
     Fun :: fun((Element1) -> Element2), Set1 :: set(Element1), Set2 :: set(Element2).
 map(Fun, Set1) ->
     sets:map(Fun, Set1).
 
+-doc """
+Given a set, return the number of elements in the set.
+
+```erlang
+1> s2:size(s2:empty()).
+0
+2> s2:size(s2:from_list([1, 2])).
+2
+```
+""".
 -spec size(Set) -> non_neg_integer() when Set :: set(_).
 size(Set) ->
     sets:size(Set).
 
+-doc """
+Given two sets, return a new set with elements of the second
+removed from the first.
+
+```erlang
+1> s2:difference(s2:from_list([1, 2, 3]), s2:empty()).
+#{1 => [],2 => [],3 => []}
+2> s2:difference(s2:from_list([1, 2, 3]), s2:from_list([1])).
+#{2 => [],3 => []}
+```
+""".
 -spec difference(Set1, Set2) -> Set3 when
     Set1 :: set(Element), Set2 :: set(Element), Set3 :: set(Element).
 difference(Set1, Set2) ->
     sets:subtract(Set1, Set2).
 
+-doc """
+Given a list of sets, return a new set with every element from
+every set.
+
+```erlang
+1> s2:unions([s2:singleton(1), s2:singleton(2), s2:singleton(3)]).
+#{1 => [],2 => [],3 => []}
+```
+""".
 -spec unions(SetList) -> Set when SetList :: [set(Element)], Set :: set(Element).
 unions(SetList) ->
     sets:union(SetList).
 
+-doc """
+Given two sets, return a new set with every element from both sets.
+
+```erlang
+1> s2:union(s2:singleton(1), s2:singleton(2)).
+#{1 => [],2 => []}
+```
+""".
 -spec union(Set1, Set2) -> Set3 when
     Set1 :: set(Element), Set2 :: set(Element), Set3 :: set(Element).
 union(Set1, Set2) ->
     sets:union(Set1, Set2).
 
+-doc """
+Given a set, return a list with all elements from the set.
+
+```erlang
+1> s2:to_list(s2:empty()).
+[]
+2> s2:to_list(s2:singleton(1)).
+[1]
+3> s2:to_list(s2:from_list([1, 2, 3])).
+[1,2,3]
+```
+""".
 -spec to_list(Set) -> List when Set :: set(Element), List :: [Element].
 to_list(Set) ->
     sets:to_list(Set).
