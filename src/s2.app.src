@@ -1,6 +1,6 @@
 {application, s2, [
-    {description, "An OTP library"},
-    {vsn, "0.1.0"},
+    {description, "A wrapper around Erlang's set module"},
+    {vsn, "1.0.0"},
     {registered, []},
     {applications, [
         kernel,
@@ -9,5 +9,5 @@
     {env, []},
     {modules, []},
     {licenses, ["Apache-2.0"]},
-    {links, []}
+    {links, [{"GitHub", "https://github.com/chiroptical/s2"}]}
 ]}.
