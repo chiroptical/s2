@@ -1,4 +1,12 @@
 -module(s2).
+-moduledoc """
+Here lies s2, a wrapper around the Erlang's [`sets`](https://www.erlang.org/doc/apps/stdlib/sets.html)
+library which gives you `{version, 2}` without having to worry about it. The API surface is
+more similar to Haskell's [`Data.Set`](https://hackage.haskell.org/package/containers-0.7/docs/Data-Set.html)
+module because of my own personal preferences. 
+
+If you have any suggestions or find an issue please submit an issue on [github](https://github.com/chiroptical/s2)
+""".
 
 -export([
     insert/2,
@@ -27,24 +35,93 @@
 
 -export_type([set/1]).
 
+% The memory documentation https://www.erlang.org/doc/system/memory.html
+% suggests this is 1 word of storage for a zero element list.
 -define(VALUE, []).
 
 -doc "As returned by `empty/0`.".
 -opaque set(Element) :: #{Element => ?VALUE}.
 
+-doc """
+Return the empty set.
+
+```erlang
+1> s2:empty().
+#{}
+```
+""".
+-spec empty() -> set(_).
+empty() ->
+    sets:new([{version, 2}]).
+
+-doc "Construct a `Set` with a single element.".
+-spec singleton(Elem) -> Set when Elem :: Element, Set :: set(Element).
+singleton(X) ->
+    s2:from_list([X]).
+
+-doc """
+Construct a `Set` from a list of elements.
+""".
+-spec from_list(List) -> Set when List :: [Element], Set :: set(Element).
+from_list(List) ->
+    sets:from_list(List, [{version, 2}]).
+
+-doc """
+Add an element to a set.
+
+```erlang
+1> s2:insert(1, s2:singleton(2)).
+#{1 => [],2 => []}
+```
+""".
 -spec insert(Element, Set1) -> Set2 when Set1 :: set(Element), Set2 :: set(Element).
 insert(Elem, Set1) ->
     sets:add_element(Elem, Set1).
 
+-doc """
+Remove an element from the set. It won't fail if the element doesn't exist.
+
+```erlang
+1> Set = s2:from_list([1, 2, 3]).
+#{1 => [],2 => [],3 => []}
+2> s2:delete(1, Set).
+#{2 => [],3 => []}
+3> s2:delete(4, Set).
+#{1 => [],2 => [],3 => []}
+```
+""".
 -spec delete(Element, Set1) -> Set2 when Set1 :: set(Element), Set2 :: set(Element).
 delete(Elem, Set) ->
     sets:del_element(Elem, Set).
 
+-doc """
+Keep elements in the set for which the predicate returns `true`.
+
+```erlang
+1> S = s2:from_list([1, 2, 3, 4]).
+#{1 => [],2 => [],3 => [],4 => []}
+2> s2:filter(fun (X) -> X >= 2 end, S).
+#{2 => [], 3 => [], 4 => []}  
+```
+""".
 -spec filter(Pred, Set1) -> Set2 when
     Pred :: fun((Element) -> boolean()), Set1 :: set(Element), Set2 :: set(Element).
 filter(Pred, Set1) ->
     sets:filter(Pred, Set1).
 
+-doc """
+Given a binary operation on elements of the set and an accumulator,
+an initial accumulator, and a set collect the result of applying
+the binary operation to each element of the set starting from
+the initial accumulator.
+
+```erlang
+1> S = s2:from_list([1, 2, 3, 4]).
+#{1 => [],2 => [],3 => [],4 => []}
+2> s2:fold(fun (Elem, Acc) -> Elem + Acc end, 0, S).
+10
+```
+""".
 -spec fold(Function, Acc0, Set) -> Acc1 when
     Function :: fun((Element, AccIn) -> AccOut),
     Set :: set(Element),
@@ -54,15 +131,6 @@ filter(Pred, Set1) ->
     AccOut :: Acc.
 fold(Function, Acc0, Set) ->
     sets:fold(Function, Acc0, Set).
-
--spec from_list(List) -> Set when List :: [Element], Set :: set(Element).
-from_list(List) ->
-    sets:from_list(List, [{version, 2}]).
-
--doc "Construct a `Set` with a single element.".
--spec singleton(Elem) -> Set when Elem :: Element, Set :: set(Element).
-singleton(X) ->
-    s2:from_list([X]).
 
 -spec intersections(SetList) -> Set when SetList :: [set(Element), ...], Set :: set(Element).
 intersections(SetList) ->
@@ -97,10 +165,6 @@ is_proper_subset(Set1, Set2) ->
     Fun :: fun((Element1) -> Element2), Set1 :: set(Element1), Set2 :: set(Element2).
 map(Fun, Set1) ->
     sets:map(Fun, Set1).
-
--spec empty() -> set(_).
-empty() ->
-    sets:new([{version, 2}]).
 
 -spec size(Set) -> non_neg_integer() when Set :: set(_).
 size(Set) ->
