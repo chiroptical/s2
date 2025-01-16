@@ -4,6 +4,5 @@ pkgs.mkShell {
     erlang
     rebar3
     erlang-ls
-    ex_doc
   ];
 }
