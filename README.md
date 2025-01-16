@@ -34,5 +34,4 @@ request. In theory, you should be able to use any of Erlang 25, 26, or 27 to
 develop this library. I personally use `nix` to manage all of my development
 environments, including this repository.
 
-To build the documentation, you'll need `ex_doc` (provided in nix shell). Run
-`rebar3 ex_doc` to ensure everything works.
+To build the documentation, run `rebar3 ex_doc` to ensure everything works.
